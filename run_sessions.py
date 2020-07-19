@@ -9,15 +9,15 @@ BLACK = 'BLACK'
 RED = 'RED'
 
 
-class roulette_martinagle:
-    def __init__(self,bet_target=BLACK,starting_units=200,max_bet=1000):
-        # There are many roulette tables in Vegas that have $5 min and $5,000 max
-        # These defaults account for a $1,000 bank roll in this situation
-        self.starting_units = starting_units
-        self.current_units = starting_units
-        self.bet_target = bet_target
+class roulette_martingale:
+    def __init__(self, bet_target=BLACK, starting_amount=1000, min_bet=5, max_bet=5000):
+        self.starting_amount = starting_amount
+        self.current_amount = starting_amount
+        self.min_bet = min_bet
         self.max_bet = max_bet
+        self.bet_target = bet_target
         self.spin_count = 0
+        self.history = []
 
         self.spinner = []
         for _ in range(49):
@@ -27,91 +27,83 @@ class roulette_martinagle:
         self.spinner.append(DOUBLE_ZERO)
 
     def spin(self):
+        self.spin_count += 1
         random.seed(datetime.now())
         random_num = random.randrange(0, 100)
         spin_value = self.spinner[random_num]
-        result = []
         if spin_value in [ZERO, DOUBLE_ZERO]:
-            result = spin_value
-        result = [spin_value, random_num]
-        self.spin_count += 1
-        return result
+            return spin_value
+        return [spin_value, random_num]
 
     def bet(self,units_bet):
-        self.current_units -= units_bet
+        self.current_amount -= units_bet
         spin_outcome = self.spin()
         if self.bet_target in spin_outcome:
             units_won = 2 * units_bet
-            self.current_units += units_won
+            self.current_amount += units_won
             return True  # Win
         return False  # Lose
 
     def reset(self):
         self.spin_count = 0
-        self.current_units = self.starting_units
+        self.current_amount = self.starting_amount
 
     def play_to_bust(self):
-        bet_units = 1
-        while bet_units <= self.current_units and bet_units < self.max_bet:
-            won_bet = self.bet(bet_units)
+        bet_amount = self.min_bet
+        while bet_amount <= self.current_amount and bet_amount <= self.max_bet:
+            won_bet = self.bet(bet_amount)
             if won_bet:
                 # Martingale strategy dictates that a bet after a win is the minimum bet value
-                bet_units = 1
+                bet_amount = self.min_bet
             else:
                 # Martingale strategy dictates that a bet after a loss is double the previous bet's value
-                bet_units = (2 * bet_units)
+                bet_amount = (2 * bet_amount)
         # Now the player has gone bust due to their inability to win back their losses
-        spin_count = self.spin_count
+        self.history.append(self.spin_count)
         self.reset()
-        return spin_count
-
-
-def get_stats(sample_size):
-    stats = []
-    martingale = roulette_martinagle()
-    for _ in range(sample_size):
-        number_of_spins = martingale.play_to_bust()
-        stats.append(number_of_spins)
-    return stats
-
-
-def visualize_stats(stats):
-    a = np.array(stats)
-    fig, (ax1, ax2) = plt.subplots(2)
-    fig.suptitle('Roulette\'s Martinagle Strategy - %s Sessions' % len(stats))
     
-    ax1.set_title('Busts per Spin Number')
-    bins = []
-    for i in range(0, 1000, 10):
-        bins.append(i)
-    ax1.hist(a, bins = bins)
+    def play_x_sessions(self, x):
+        for _ in range(x):
+            self.play_to_bust()
 
-    ax2.set_title('Bust Percentage for Spin Count Range')
-    ranges = [25, 50, 100, 150]
-    range_counts = [0, 0, 0, 0, 0]
-    for val in stats:
-        if val <= ranges[0]:
-            range_counts[0] += 1
-        elif val <= ranges[1]:
-            range_counts[1] += 1
-        elif val <= ranges[2]:
-            range_counts[2] += 1
-        elif val <= ranges[3]:
-            range_counts[3] += 1
-        else:
-            range_counts[4] += 1
-    labels = ['X<=25', '25<X<=50', '50<X<=100', '100<X<=150', 'X>150']
-    ax2.pie(range_counts, labels=labels, autopct='%1.1f%%', startangle=90)
-    ax2.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.  
+    def visualize_stats(self):
+        a = np.array(self.history)
+        fig, (ax1, ax2) = plt.subplots(2)
+        fig.suptitle('Roulette Martingale Strategy - %s Sessions\n$%s Bank Roll\n\$%s Min Bet / $%s Max Bet' % (len(self.history), self.starting_amount, self.min_bet, self.max_bet))
+        
+        ax1.set_title('Busts per Spin Number')
+        bins = []
+        for i in range(0, 1000, 10):
+            bins.append(i)
+        ax1.hist(a, bins = bins)
 
-    plt.tight_layout()
-    plt.show()
+        ax2.set_title('Bust Percentage for Spin Count Range')
+        ranges = [25, 50, 100, 150]
+        range_counts = [0, 0, 0, 0, 0]
+        for val in self.history:
+            if val <= ranges[0]:
+                range_counts[0] += 1
+            elif val <= ranges[1]:
+                range_counts[1] += 1
+            elif val <= ranges[2]:
+                range_counts[2] += 1
+            elif val <= ranges[3]:
+                range_counts[3] += 1
+            else:
+                range_counts[4] += 1
+        labels = ['X<=25', '25<X<=50', '50<X<=100', '100<X<=150', 'X>150']
+        ax2.pie(range_counts, labels=labels, autopct='%1.1f%%', startangle=90)
+        ax2.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.  
+
+        plt.tight_layout()
+        plt.show()
 
 
 def main():
-    sample_size = 10000  # Number of Martingale sessions - A session ends when the player can no longer win back their losses
-    stats = get_stats(sample_size)
-    visualize_stats(stats)
+    sample_size = 1000  # Number of Martingale sessions - A session ends when the player can no longer win back their losses
+    martingale = roulette_martingale()
+    martingale.play_x_sessions(sample_size)
+    martingale.visualize_stats()
 
 
 if __name__ == '__main__':
