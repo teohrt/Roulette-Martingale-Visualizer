@@ -10,10 +10,13 @@ RED = 'RED'
 
 
 class roulette_martinagle:
-    def __init__(self,bet_target=BLACK,starting_units=100):
+    def __init__(self,bet_target=BLACK,starting_units=200,max_bet=1000):
+        # There are many roulette tables in Vegas that have $5 min and $5,000 max
+        # These defaults account for a $1,000 bank roll in this situation
         self.starting_units = starting_units
-        self.bet_target = bet_target
         self.current_units = starting_units
+        self.bet_target = bet_target
+        self.max_bet = max_bet
         self.spin_count = 0
 
         self.spinner = []
@@ -49,7 +52,7 @@ class roulette_martinagle:
 
     def play_to_bust(self):
         bet_units = 1
-        while bet_units <= self.current_units:
+        while bet_units <= self.current_units and bet_units < self.max_bet:
             won_bet = self.bet(bet_units)
             if won_bet:
                 # Martingale strategy dictates that a bet after a win is the minimum bet value
@@ -74,17 +77,40 @@ def get_stats(sample_size):
 
 def visualize_stats(stats):
     a = np.array(stats)
+    fig, (ax1, ax2) = plt.subplots(2)
+    fig.suptitle('Roulette\'s Martinagle Strategy - %s Sessions' % len(stats))
+    
+    ax1.set_title('Busts per Spin Number')
     bins = []
     for i in range(0, 1000, 10):
         bins.append(i)
-    plt.hist(a, bins = bins) 
-    plt.title("Martingale Roulette - Spin Number that Bust - %s Sessions" % len(stats)) 
+    ax1.hist(a, bins = bins)
+
+    ax2.set_title('Bust Percentage for Spin Count Range')
+    ranges = [25, 50, 100, 150]
+    range_counts = [0, 0, 0, 0, 0]
+    for val in stats:
+        if val <= ranges[0]:
+            range_counts[0] += 1
+        elif val <= ranges[1]:
+            range_counts[1] += 1
+        elif val <= ranges[2]:
+            range_counts[2] += 1
+        elif val <= ranges[3]:
+            range_counts[3] += 1
+        else:
+            range_counts[4] += 1
+    labels = ['X<=25', '25<X<=50', '50<X<=100', '100<X<=150', 'X>150']
+    ax2.pie(range_counts, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax2.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.  
+
+    plt.tight_layout()
     plt.show()
 
 
 def main():
-    SAMPLE_SIZE = 10000  # Number of Martingale sessions - A session ends when the player can no longer win back their losses
-    stats = get_stats(SAMPLE_SIZE)
+    sample_size = 10000  # Number of Martingale sessions - A session ends when the player can no longer win back their losses
+    stats = get_stats(sample_size)
     visualize_stats(stats)
 
 
