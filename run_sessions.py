@@ -1,12 +1,21 @@
+from flask import Flask, send_file, make_response
 from matplotlib import pyplot as plt 
 from datetime import datetime
 import numpy as np  
+import matplotlib 
 import random
+import io
 
-ZERO = '0'
+# Sets the background to non-interactive, ensuring that the library doesn't start GUI that won't be utilied
+# https://github.com/matplotlib/matplotlib/issues/14304/
+matplotlib.use('agg')
+
 DOUBLE_ZERO = '00'
 BLACK = 'BLACK'
 RED = 'RED'
+ZERO = '0'
+
+app = Flask(__name__)
 
 
 class roulette_martingale:
@@ -66,7 +75,7 @@ class roulette_martingale:
         for _ in range(x):
             self.play_to_bust()
 
-    def visualize_stats(self):
+    def get_plot(self):
         a = np.array(self.history)
         fig, (ax1, ax2) = plt.subplots(2)
         fig.suptitle('Roulette Martingale Strategy - %s Sessions\n$%s Bank Roll\n\$%s Min Bet / $%s Max Bet' % (len(self.history), self.starting_amount, self.min_bet, self.max_bet))
@@ -76,6 +85,8 @@ class roulette_martingale:
         for i in range(0, 1000, 10):
             bins.append(i)
         ax1.hist(a, bins = bins)
+        ax1.set_xlabel('Spin #')
+        ax1.set_ylabel('Bust Frequency')
 
         ax2.set_title('Bust Percentage for Spin Count Range')
         ranges = [25, 50, 100, 150]
@@ -96,15 +107,24 @@ class roulette_martingale:
         ax2.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.  
 
         plt.tight_layout()
-        plt.show()
+        return plt
+        
+    def get_plot_image_bytes(self):
+        plot = self.get_plot()
+        buf = io.BytesIO()
+        plot.savefig(buf, format='png')
+        buf.seek(0)
+        return buf
 
 
-def main():
-    sample_size = 1000  # Number of Martingale sessions - A session ends when the player can no longer win back their losses
+@app.route('/', methods=['GET'])
+def display_charts():
+    # Number of Martingale sessions - A session ends when the player can no longer win back their losses
+    sample_size = 1000
     martingale = roulette_martingale()
     martingale.play_x_sessions(sample_size)
-    martingale.visualize_stats()
-
-
-if __name__ == '__main__':
-    main()
+    buf = martingale.get_plot_image_bytes()
+    return send_file(buf, attachment_filename='output.png', mimetype='image/png')
+    
+    
+app.run(debug=False)
