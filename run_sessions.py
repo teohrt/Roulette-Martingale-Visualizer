@@ -1,4 +1,4 @@
-from flask import Flask, send_file, make_response
+from flask import Flask, send_file, make_response, request
 from matplotlib import pyplot as plt 
 from datetime import datetime
 import numpy as np  
@@ -6,16 +6,16 @@ import matplotlib
 import random
 import io
 
-# Sets the background to non-interactive, ensuring that the library doesn't start GUI that won't be utilied
+# Sets the background to non-interactive, ensuring that the library doesn't initialize GUI
 # https://github.com/matplotlib/matplotlib/issues/14304/
 matplotlib.use('agg')
+app = Flask(__name__)
 
 DOUBLE_ZERO = '00'
 BLACK = 'BLACK'
 RED = 'RED'
 ZERO = '0'
 
-app = Flask(__name__)
 
 
 class roulette_martingale:
@@ -109,7 +109,7 @@ class roulette_martingale:
         plt.tight_layout()
         return plt
         
-    def get_plot_image_bytes(self):
+    def get_result_png_buffer(self):
         plot = self.get_plot()
         buf = io.BytesIO()
         plot.savefig(buf, format='png')
@@ -117,14 +117,14 @@ class roulette_martingale:
         return buf
 
 
-@app.route('/', methods=['GET'])
-def display_charts():
+@app.route('/result', methods=['GET'])
+def serve_image():
     # Number of Martingale sessions - A session ends when the player can no longer win back their losses
-    sample_size = 1000
+    sample_size = request.args.get('sample', default=1000, type=int)
     martingale = roulette_martingale()
     martingale.play_x_sessions(sample_size)
-    buf = martingale.get_plot_image_bytes()
-    return send_file(buf, attachment_filename='output.png', mimetype='image/png')
+    buf = martingale.get_result_png_buffer()
+    return send_file(buf, attachment_filename='result.png', mimetype='image/png')
     
     
 app.run(debug=False)
