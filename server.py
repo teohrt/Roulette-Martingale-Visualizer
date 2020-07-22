@@ -102,16 +102,17 @@ class roulette_martingale:
             else:
                 range_counts[4] += 1
         labels = ['X<=25', '25<X<=50', '50<X<=100', '100<X<=150', 'X>150']
-        ax2.pie(range_counts, labels=labels, autopct='%1.1f%%', startangle=90)
+        patches, _, _ = ax2.pie(range_counts, autopct='%1.1f%%', startangle=90)
+        plt.legend(patches, labels, loc='best')
         ax2.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.  
-
-        plt.tight_layout()
+        
+        plt.tight_layout(pad=.5, w_pad=.5, h_pad=1)
         return plt
         
     def get_result_png_buffer(self):
         plot = self.get_plot()
         buf = io.BytesIO()
-        plot.savefig(buf, format='png')
+        plot.savefig(buf, format='png', dpi=1000)
         buf.seek(0)
         return buf
 
