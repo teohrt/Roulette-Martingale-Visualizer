@@ -1,4 +1,4 @@
-from flask import Flask, send_file, make_response, request
+from flask import Flask, send_file, request
 from matplotlib import pyplot as plt 
 from datetime import datetime
 import numpy as np  
@@ -17,9 +17,8 @@ RED = 'RED'
 ZERO = '0'
 
 
-
 class roulette_martingale:
-    def __init__(self, bet_target=BLACK, starting_amount=1000, min_bet=5, max_bet=5000):
+    def __init__(self, starting_amount, min_bet, max_bet, bet_target=BLACK,):
         self.starting_amount = starting_amount
         self.current_amount = starting_amount
         self.min_bet = min_bet
@@ -117,14 +116,17 @@ class roulette_martingale:
         return buf
 
 
-@app.route('/result', methods=['GET'])
+@app.route('/api/v1/roulette/martingale', methods=['GET'])
 def serve_image():
     # Number of Martingale sessions - A session ends when the player can no longer win back their losses
-    sample_size = request.args.get('sample', default=1000, type=int)
-    martingale = roulette_martingale()
-    martingale.play_x_sessions(sample_size)
+    sessions = request.args.get('sessions', default=1000, type=int)
+    bankroll = request.args.get('bankroll', default=1000, type=int)
+    max_bet = request.args.get('max', default=5000, type=int)
+    min_bet = request.args.get('min', default=5, type=int)
+    martingale = roulette_martingale(bankroll, min_bet, max_bet)
+    martingale.play_x_sessions(sessions)
     buf = martingale.get_result_png_buffer()
     return send_file(buf, attachment_filename='result.png', mimetype='image/png')
-    
-    
+
+
 app.run(debug=False)
