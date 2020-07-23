@@ -9,7 +9,7 @@ ZERO = '0'
 
 
 class roulette_martingale:
-    def __init__(self, starting_amount, min_bet, max_bet, bet_target=BLACK,):
+    def __init__(self, starting_amount, min_bet, max_bet, bet_target=BLACK):
         self.amount_before_losing_streak = starting_amount
         self.starting_amount = starting_amount
         self.current_amount = starting_amount

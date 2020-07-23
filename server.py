@@ -1,6 +1,6 @@
+from image_generation import generate_image, configure_matplotlib
 from roulette_martingale import roulette_martingale
 from flask import Flask, send_file, request
-from image_generation import generate_image, configure_matplotlib
 
 app = Flask(__name__)
 
