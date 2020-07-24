@@ -41,7 +41,10 @@ def get_range_stats(ranges, winnings, spins):
         range_total = 0
         for winnings in range_winnings:
             range_total += winnings
-        range_average_winnings[i] = range_total / len(range_winnings)
+        if len(range_winnings) > 0:
+            range_average_winnings[i] = range_total / len(range_winnings)
+        else:
+            range_average_winnings[i] = 0
     return range_bust_counts, range_average_winnings
 
 
