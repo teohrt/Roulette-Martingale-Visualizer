@@ -10,7 +10,8 @@ ZERO = '0'
 
 
 class roulette_martingale:
-    def __init__(self, starting_amount, min_bet, max_bet, bet_target=BLACK):
+    def __init__(self, starting_amount, min_bet, max_bet, modified_strategy, bet_target=BLACK):
+        self.modified_strategy = modified_strategy
         self.amount_before_losing_streak = starting_amount
         self.starting_amount = starting_amount
         self.current_amount = starting_amount
@@ -62,7 +63,10 @@ class roulette_martingale:
         while leftover_bankroll >= next_bullet:
             bullets.append(next_bullet)
             leftover_bankroll -= next_bullet
-            next_bullet = min(next_bullet * 2, self.max_bet)
+            if self.modified_strategy and next_bullet == 2 * self.min_bet:
+                next_bullet = min(self.min_bet * 3, self.max_bet)
+            else:
+                next_bullet = min(next_bullet * 2, self.max_bet)
         if leftover_bankroll > 0: bullets.append(leftover_bankroll)
         return bullets
 
@@ -79,8 +83,14 @@ class roulette_martingale:
                 # Martingale strategy dictates that a bet after a win is the minimum bet value
                 bet_amount = self.min_bet
             else:
-                # Martingale strategy dictates that a bet after a loss is double the previous bet's value
-                bet_amount = (2 * bet_amount)
+                if self.modified_strategy and bet_amount == (2 * self.min_bet):
+                    # If we're using the modified martinagle strategy, we'll be in "recovery mode" after the second bullet
+                    # This allows us an additional bullet to break even for most bankrolls, at the cost of making a profit after the second bullet
+                    # This allows additional peace of mind at the cost of ROI
+                    bet_amount = (3 * self.min_bet)
+                else:
+                    # Martingale strategy dictates that a bet after a loss is double the previous bet's value
+                    bet_amount = (2 * bet_amount)
         # Now the player has gone bust due to their inability to win back their losses
         self.history['spins'].append(self.spin_count)
         self.history['winnings'].append(self.amount_before_losing_streak)
