@@ -1,6 +1,7 @@
 from image_generation import generate_image, configure_matplotlib
 from roulette_martingale import roulette_martingale
 from flask import Flask, send_file, request
+import json
 
 app = Flask(__name__)
 
@@ -39,8 +40,9 @@ def get_bullets():
     max_bet = request.args.get('max', default=5000, type=int)
     min_bet = request.args.get('min', default=5, type=int)
     martingale = roulette_martingale(bankroll, min_bet, max_bet, modified)
-    bullets = martingale.get_bullets()
-    return str(bullets)
+    return json.dumps({
+        'bullets': martingale.get_bullets()
+    })
 
 
 if __name__ == '__main__':
