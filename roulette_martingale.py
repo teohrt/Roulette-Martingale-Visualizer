@@ -61,7 +61,7 @@ class roulette_martingale:
         while leftover_bankroll >= next_bullet:
             bullets.append(next_bullet)
             leftover_bankroll -= next_bullet
-            next_bullet = next_bullet * 2
+            next_bullet = min(next_bullet * 2, self.max_bet)
         if leftover_bankroll > 0: bullets.append(leftover_bankroll)
         return bullets
 
