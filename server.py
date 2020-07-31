@@ -5,7 +5,7 @@ from flask import Flask, send_file, request
 app = Flask(__name__)
 
 
-@app.route('/api/v1/roulette/martingale', methods=['GET'])
+@app.route('/api/v1/roulette/martingale/probability', methods=['GET'])
 def serve_image():
     # Number of Martingale sessions - A session ends when the player can no longer win back their losses
     configure_matplotlib()
@@ -17,6 +17,16 @@ def serve_image():
     martingale.play_x_sessions(sessions)
     image_buf = generate_image(martingale.get_spins_history(), martingale.get_winnings_history(), bankroll, min_bet, max_bet)
     return send_file(image_buf, attachment_filename='result.png', mimetype='image/png')
+
+
+@app.route('/api/v1/roulette/martingale/bullets', methods=['GET'])
+def get_bullets():
+    min_bet = request.args.get('min', default=5, type=int)
+    bankroll = request.args.get('bankroll', default=500, type=int)
+    max_bet = request.args.get('max', default=5000, type=int)
+    martingale = roulette_martingale(bankroll, min_bet, max_bet)
+    bullets = martingale.get_bullets()
+    return str(bullets)
 
 
 if __name__ == '__main__':

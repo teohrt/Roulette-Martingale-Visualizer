@@ -54,6 +54,17 @@ class roulette_martingale:
             return True  # Win
         return False  # Lose
 
+    def get_bullets(self):
+        bullets = []
+        leftover_bankroll = self.starting_amount
+        next_bullet = self.min_bet
+        while leftover_bankroll >= next_bullet:
+            bullets.append(next_bullet)
+            leftover_bankroll -= next_bullet
+            next_bullet = next_bullet * 2
+        if leftover_bankroll > 0: bullets.append(leftover_bankroll)
+        return bullets
+
     def reset(self):
         self.spin_count = 0
         self.current_amount = self.starting_amount
