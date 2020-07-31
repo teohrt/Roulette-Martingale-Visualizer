@@ -1,5 +1,6 @@
 from datetime import datetime
 import random
+import json
 import io
 
 DOUBLE_ZERO = '00'
@@ -88,3 +89,7 @@ class roulette_martingale:
     def play_x_sessions(self, x):
         for _ in range(x):
             self.play_to_bust()
+
+    def get_json_results(self):
+        dump = json.dumps(self.history)
+        return dump
